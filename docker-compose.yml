@@ -1,0 +1,30 @@
+# Значения ${...} docker compose берёт из файла .env в корне проекта.
+services:
+  db:
+    container_name: "db"
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:?задайте в .env}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?задайте в .env}
+      - POSTGRES_DB=${POSTGRES_DB:?задайте в .env}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - custom
+
+  db_test:
+    container_name: "db_test"
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=${TEST_POSTGRES_USER:?задайте в .env}
+      - POSTGRES_PASSWORD=${TEST_POSTGRES_PASSWORD:?задайте в .env}
+      - POSTGRES_DB=${TEST_POSTGRES_DB:?задайте в .env}
+    ports:
+      - "${TEST_POSTGRES_PORT:-5433}:5432"
+    networks:
+      - custom
+networks:
+  custom:
+    driver: bridge
