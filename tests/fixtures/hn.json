@@ -1,0 +1,28 @@
+{
+  "hits": [
+    {
+      "objectID": "50100015",
+      "title": "Show HN: A tiny RSS reader",
+      "url": "https://example.com/rss-reader",
+      "author": "alice",
+      "created_at": "2026-10-15T06:34:10Z",
+      "created_at_i": 1792046050,
+      "story_text": null
+    },
+    {
+      "objectID": "50100016",
+      "title": "Ask HN: How do you read news?",
+      "url": null,
+      "author": "bob",
+      "created_at_i": 1792046100,
+      "story_text": "<p>Curious about your &quot;setup&quot;.</p>"
+    },
+    {
+      "objectID": "50100017",
+      "title": null,
+      "url": "https://example.com/no-title",
+      "created_at_i": 1792046200
+    }
+  ],
+  "nbHits": 3
+}

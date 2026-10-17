@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Test feed</title>
+    <link>https://example.com/</link>
+    <item>
+      <guid>https://example.com/news/1</guid>
+      <link>https://example.com/news/1?utm_source=rss</link>
+      <title>First &amp; foremost</title>
+      <description><![CDATA[<p>Первая&nbsp;новость <b>дня</b>.</p>]]></description>
+      <dc:creator>Иван Петров</dc:creator>
+      <pubDate>Thu, 15 Oct 2026 09:27:41 +0300</pubDate>
+    </item>
+    <item>
+      <link>https://example.com/news/2</link>
+      <title>Without guid and date</title>
+    </item>
+    <item>
+      <guid>no-link</guid>
+      <title>Item without link is skipped</title>
+    </item>
+    <item>
+      <link>https://example.com/news/4</link>
+      <title>   </title>
+    </item>
+  </channel>
+</rss>

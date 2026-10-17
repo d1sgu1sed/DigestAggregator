@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <id>tag:google.com,2005:reader/user/00000000000000000000/state/com.google/alerts/1</id>
+  <title>Оповещение Google – python</title>
+  <updated>2026-10-15T08:00:00Z</updated>
+  <entry>
+    <id>tag:google.com,2013:googlealerts/feed:123456789</id>
+    <title type="html">Вышел новый релиз &lt;b&gt;Python&lt;/b&gt; 3.15</title>
+    <link href="https://www.google.com/url?rct=j&amp;sa=t&amp;url=https://python.org/news/315&amp;ct=ga&amp;cd=abc&amp;usg=xyz"/>
+    <published>2026-10-15T07:30:00Z</published>
+    <updated>2026-10-15T07:30:00Z</updated>
+    <content type="html">Релиз &lt;b&gt;Python&lt;/b&gt; включает ...</content>
+  </entry>
+</feed>

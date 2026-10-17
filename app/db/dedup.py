@@ -2,7 +2,7 @@ import hashlib
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 # Параметры трекинга, которые не меняют саму новость.
-TRACKING_PARAMS = {"fbclid", "gclid", "yclid", "ref", "from"}
+TRACKING_PARAMS = {"fbclid", "gclid", "yclid", "ref", "from", "at_medium", "at_campaign"}
 
 
 def normalize_url(url: str) -> str:

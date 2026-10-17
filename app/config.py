@@ -47,6 +47,9 @@ class Settings(BaseSettings):
     test_postgres_host: str = "127.0.0.1"
     test_postgres_port: int = 5433
 
+    # RSS-лента Google Alerts
+    google_alerts_feed_url: str | None = None
+
     @property
     def database_url(self) -> URL:
         return _pg_url(
