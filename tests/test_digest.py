@@ -77,9 +77,6 @@ def test_report_detached_from_session(session, source):
     assert report.sections[0].items[0].source == "Example"  # обычные данные, не ORM
 
 
-# --- render_text ------------------------------------------------------------
-
-
 def make_report(sections, period=DigestPeriod.DAY) -> DigestReport:
     return DigestReport(
         period=period,

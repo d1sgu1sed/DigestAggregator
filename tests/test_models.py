@@ -98,9 +98,6 @@ def test_digest_saved(session):
     assert digest.created_at is not None
 
 
-# --- session_scope ----------------------------------------------------------
-
-
 @pytest.fixture
 def scoped(session, monkeypatch):
     """Перенаправляет session_scope на тестовое соединение."""

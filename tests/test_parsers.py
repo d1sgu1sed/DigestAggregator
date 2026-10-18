@@ -14,8 +14,6 @@ from app.collector.parsers import (
 )
 from tests.helpers import fixture_bytes
 
-# --- clean_text / unwrap_google_redirect ------------------------------------
-
 
 @pytest.mark.parametrize(
     ("raw", "expected"),
@@ -47,9 +45,6 @@ def test_unwrap_google_redirect():
 )
 def test_unwrap_google_redirect_leaves_other_urls(url):
     assert unwrap_google_redirect(url) == url
-
-
-# --- RSS --------------------------------------------------------------------
 
 
 @pytest.fixture
@@ -104,9 +99,6 @@ def test_invalid_feed_raises(content):
         parse_feed(content)
 
 
-# --- Google Alerts (Atom) ---------------------------------------------------
-
-
 def test_google_alerts_entry():
     [item] = parse_feed(fixture_bytes("google_alerts.xml"))
 
@@ -114,9 +106,6 @@ def test_google_alerts_entry():
     assert item.external_id == "tag:google.com,2013:googlealerts/feed:123456789"
     assert item.title == "Вышел новый релиз Python 3.15"  # без <b>
     assert item.published_at == datetime(2026, 10, 15, 7, 30, tzinfo=UTC)
-
-
-# --- Hacker News API ----------------------------------------------------------
 
 
 @pytest.fixture

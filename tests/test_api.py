@@ -33,9 +33,6 @@ def recent(hours: float) -> datetime:
     return datetime.now(UTC) - timedelta(hours=hours)
 
 
-# --- /health ----------------------------------------------------------------------
-
-
 def test_health_without_scheduler(client):
     response = client.get("/health")
 
@@ -74,8 +71,6 @@ def test_health_database_down(app, client):
     assert response.json()["detail"]["database"] == "unavailable"
 
 
-# --- /sources ---------------------------------------------------------------------
-
 
 def test_sources_with_news_count(client, session, source, other_source):
     save_news(session, source.id, [make_item(1), make_item(2)])
@@ -92,8 +87,6 @@ def test_sources_with_news_count(client, session, source, other_source):
 def test_sources_empty(client):
     assert client.get("/sources").json() == []
 
-
-# --- /digest ----------------------------------------------------------------------
 
 
 def test_digest_json(client, session, source):
@@ -147,9 +140,6 @@ def test_digest_invalid_params(client, params):
     assert client.get("/digest", params=params).status_code == 422
 
 
-# --- /collect ---------------------------------------------------------------------
-
-
 def test_collect(monkeypatch, client):
     results = [CollectResult("A", fetched=5, saved=3), CollectResult("B", error="ConnectTimeout")]
     monkeypatch.setattr(routes, "run_collection", lambda: results)
@@ -180,9 +170,6 @@ def test_collect_conflict_when_running(monkeypatch, client):
 
 def test_collect_is_post_only(client):
     assert client.get("/collect").status_code == 405
-
-
-# --- запуск приложения (lifespan) -------------------------------------------------
 
 
 @pytest.fixture

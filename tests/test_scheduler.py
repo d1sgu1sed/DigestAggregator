@@ -13,8 +13,6 @@ from app.collector import CollectionInProgressError, CollectResult, run_collecti
 from app.scheduler import COLLECT_JOB_ID, collect_job, create_scheduler
 from tests.helpers import fixture_bytes, mock_client, respond_with
 
-# --- create_scheduler ---------------------------------------------------------
-
 
 @pytest.fixture
 def started():
@@ -58,9 +56,6 @@ def test_scheduler_uses_utc(started):
     job = started(30).get_job(COLLECT_JOB_ID)
 
     assert job.next_run_time.utcoffset() == timedelta(0)
-
-
-# --- collect_job ----------------------------------------------------------------
 
 
 def test_collect_job_logs_summary(monkeypatch, caplog):
