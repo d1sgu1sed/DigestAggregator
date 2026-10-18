@@ -1,10 +1,11 @@
+import uuid
 from datetime import datetime
 from enum import StrEnum
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, StringConstraints
 
-from app.db.models import DigestPeriod, SourceType
+from app.db.models import DigestPeriod, DigestStatus, SourceType
 
 
 class SchedulerStatus(BaseModel):
@@ -66,6 +67,7 @@ class CollectOut(BaseModel):
 class DigestItemOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    id: uuid.UUID
     title: str
     url: str
     published_at: datetime
@@ -88,3 +90,31 @@ class DigestOut(BaseModel):
     end: datetime
     total: int
     sections: list[DigestSectionOut]
+
+
+class NewsDescriptionOut(BaseModel):
+    id: uuid.UUID
+    source: str
+    title: str
+    url: str
+    published_at: datetime
+    summary: str | None
+    llm_summary: str
+    llm_model: str | None
+    cached: bool
+
+
+class LLMDigestOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    status: DigestStatus
+    period: DigestPeriod
+    start: datetime = Field(validation_alias="period_start")
+    end: datetime = Field(validation_alias="period_end")
+    llm_model: str | None
+    news_count: int
+    content: str | None
+    error: str | None
+    created_at: datetime
+    finished_at: datetime | None

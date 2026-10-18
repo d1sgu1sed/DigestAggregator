@@ -2,6 +2,8 @@ from pathlib import Path
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from app.llm.models import LLMModel
 from sqlalchemy import URL
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -53,6 +55,12 @@ class Settings(BaseSettings):
     # Планировщик сбора новостей (запускается вместе с API)
     scheduler_enabled: bool = True
     collect_interval_minutes: int = Field(default=30, gt=0)
+
+    # LLM для описаний новостей
+    ollama_url: str = "http://127.0.0.1:11434"
+    llm_model: LLMModel = LLMModel.GEMMA3_4B
+    llm_timeout_seconds: float = Field(default=120, gt=0)
+    llm_digest_per_source_per_day: int = Field(default=10, gt=0)
 
     @property
     def database_url(self) -> URL:

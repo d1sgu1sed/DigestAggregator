@@ -101,7 +101,7 @@ def test_digest_json(client, session, source):
     [section] = body["sections"]
     assert section["source"] == "Example"
     assert section["items"][0]["title"] == "News 1"
-    assert set(section["items"][0]) == {"title", "url", "published_at", "summary"}
+    assert set(section["items"][0]) == {"title", "url", "published_at", "summary", "id"}
 
 
 def test_digest_defaults_to_day(client, session, source):

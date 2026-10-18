@@ -1,3 +1,4 @@
+import uuid
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -17,6 +18,7 @@ class DigestItem:
     source: str
     published_at: datetime
     summary: str | None
+    id: uuid.UUID | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,17 +44,15 @@ def build_digest(
     per_source: int = 10,
     now: datetime | None = None,
 ) -> DigestReport:
-    """Сводка за период: новости сгруппированы по источникам, свежие сверху.
-
-    Возвращает простые dataclass-объекты, не привязанные к сессии БД.
-    """
+    """Сводка за период: новости сгруппированы по источникам, свежие сверху"""
     start, end = period_bounds(period, now)
-    news = get_news_for_period(session, start, end)  # уже отсортированы: новые сначала
+    news = get_news_for_period(session, start, end)
 
     grouped: dict[str, list[DigestItem]] = {}
     for n in news:
         grouped.setdefault(n.source.name, []).append(
             DigestItem(
+                id=n.id,
                 title=n.title,
                 url=n.url,
                 source=n.source.name,
@@ -74,7 +74,7 @@ def _shorten(text: str, limit: int = TEXT_SUMMARY_LENGTH) -> str:
 
 
 def render_text(report: DigestReport) -> str:
-    """Сводка в виде простого текста (для вывода или сохранения в .txt)."""
+    """Сводка в виде простого текста"""
     fmt = "%d.%m.%Y %H:%M"
     lines = [
         f"Сводка новостей за {PERIOD_TITLES[report.period]}",

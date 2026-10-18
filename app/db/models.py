@@ -32,6 +32,13 @@ class DigestPeriod(StrEnum):
     WEEK = "week"
 
 
+class DigestStatus(StrEnum):
+    PENDING = "pending"  # задача создана, ждёт запуска
+    RUNNING = "running"  # нейросеть генерирует дайджест
+    DONE = "done"
+    FAILED = "failed"
+
+
 def _pg_enum(enum_cls: type[StrEnum], name: str) -> Enum:
     # Храним в БД значения ("rss"), а не имена членов ("RSS").
     return Enum(enum_cls, name=name, values_callable=lambda e: [m.value for m in e])
@@ -93,6 +100,8 @@ class NewsItem(Base):
 
     # Описание, сгенерированное LLM (заполняется отдельно).
     llm_summary: Mapped[str | None] = mapped_column(Text)
+    # Модель, которая написала llm_summary (например, "gemma3:4b").
+    llm_model: Mapped[str | None] = mapped_column(String(100))
 
     source: Mapped[Source] = relationship(back_populates="news")
 
@@ -111,10 +120,16 @@ class Digest(Base):
     period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     news_count: Mapped[int] = mapped_column(Integer)
-    content: Mapped[str] = mapped_column(Text)
+    content: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[DigestStatus] = mapped_column(
+        _pg_enum(DigestStatus, "digest_status"), server_default=DigestStatus.DONE.value
+    )
+    llm_model: Mapped[str | None] = mapped_column(String(100))
+    error: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     def __repr__(self) -> str:
-        return f"<Digest id={self.id} period={self.period} start={self.period_start}>"
+        return f"<Digest id={self.id} period={self.period} status={self.status}>"

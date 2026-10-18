@@ -10,6 +10,7 @@ from app.api.routes import router
 from app.collector import seed_sources
 from app.config import settings
 from app.db.session import session_scope
+from app.llm import fail_interrupted_digests
 from app.scheduler import create_scheduler
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -19,6 +20,8 @@ logger = logging.getLogger(__name__)
 def seed_default_sources() -> None:
     with session_scope() as session:
         seed_sources(session)
+        if interrupted := fail_interrupted_digests(session):
+            logger.warning("Прервано генераций дайджеста при прошлой остановке: %d", interrupted)
 
 
 @asynccontextmanager
