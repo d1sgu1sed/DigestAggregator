@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import URL
 
@@ -49,6 +49,10 @@ class Settings(BaseSettings):
 
     # RSS-лента Google Alerts
     google_alerts_feed_url: str | None = None
+
+    # Планировщик сбора новостей (запускается вместе с API)
+    scheduler_enabled: bool = True
+    collect_interval_minutes: int = Field(default=30, gt=0)
 
     @property
     def database_url(self) -> URL:

@@ -1,5 +1,3 @@
-"""Загрузка с повторами при сбоях сети (tenacity) — на подменённом транспорте."""
-
 import httpx
 import pytest
 from tenacity import wait_none

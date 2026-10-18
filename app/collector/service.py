@@ -1,4 +1,7 @@
 import logging
+import threading
+from collections.abc import Callable
+from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
@@ -10,9 +13,15 @@ from app.collector.http import FetchError, create_client, fetch
 from app.collector.parsers import ParseError, Parser, get_api_parser, parse_feed
 from app.db.models import Source, SourceType
 from app.db.repository import save_news
+from app.db.session import session_scope
 
 logger = logging.getLogger(__name__)
 
+class CollectionInProgressError(Exception):
+    """Сбор уже идёт, второй параллельно не запускаем"""
+
+
+_collect_lock = threading.Lock()
 
 @dataclass(frozen=True, slots=True)
 class CollectResult:
@@ -33,11 +42,7 @@ def get_parser(source: Source) -> Parser:
 
 
 def collect_source(session: Session, source: Source, client: httpx.Client, **fetch_options) -> CollectResult:
-    """Скачивает, разбирает и сохраняет новости одного источника
-
-    Сетевые ошибки и ошибки разбора не пробрасываются, а записываются
-    в source.last_error — сбой одного источника не мешает остальным.
-    """
+    """Скачивает, разбирает и сохраняет новости одного источника"""
     source.last_fetched_at = datetime.now(UTC)
     try:
         items = get_parser(source)(fetch(client, source.url, **fetch_options))
@@ -66,3 +71,18 @@ def collect_all(session: Session, client: httpx.Client | None = None, **fetch_op
     finally:
         if own_client:
             client.close()
+
+
+def run_collection(
+    session_factory: Callable[[], AbstractContextManager[Session]] = session_scope,
+    client: httpx.Client | None = None,
+    **fetch_options,
+) -> list[CollectResult]:
+    """Единая точка запуска сбора для планировщика и API"""
+    if not _collect_lock.acquire(blocking=False):
+        raise CollectionInProgressError("Сбор новостей уже выполняется")
+    try:
+        with session_factory() as session:
+            return collect_all(session, client, **fetch_options)
+    finally:
+        _collect_lock.release()

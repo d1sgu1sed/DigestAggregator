@@ -1,5 +1,3 @@
-"""Парсеры RSS/Atom/Google Alerts и Hacker News API — без сети и БД."""
-
 import json
 from datetime import UTC, datetime, timedelta
 
@@ -79,10 +77,10 @@ def test_rss_full_entry(rss_items):
 def test_rss_fallbacks_for_missing_fields(rss_items):
     item = rss_items[1]
 
-    assert item.external_id == item.url  # нет guid — берём ссылку
+    assert item.external_id == item.url  # нет guid, берём ссылку
     assert item.summary is None
     assert item.author is None
-    assert datetime.now(UTC) - item.published_at < timedelta(minutes=1)  # нет даты — время сбора
+    assert datetime.now(UTC) - item.published_at < timedelta(minutes=1)  # нет даты, берём время сбора
 
 
 def test_rss_long_summary_truncated():

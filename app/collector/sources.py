@@ -15,7 +15,7 @@ class SourceConfig:
 
 
 DEFAULT_SOURCES = [
-    SourceConfig("BBC News — World", SourceType.RSS, "https://feeds.bbci.co.uk/news/world/rss.xml"),
+    SourceConfig("BBC News - World", SourceType.RSS, "https://feeds.bbci.co.uk/news/world/rss.xml"),
     SourceConfig("Meduza", SourceType.RSS, "https://meduza.io/rss/all"),
     SourceConfig(
         "Hacker News",
