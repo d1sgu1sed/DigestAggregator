@@ -1,21 +1,30 @@
 from enum import StrEnum
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.responses import PlainTextResponse
 from sqlalchemy import func, select, text
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.api.deps import SessionDep, get_scheduler
+from app.api.deps import HttpClientDep, SessionDep, get_scheduler
 from app.api.schemas import (
     CollectOut,
     DigestOut,
     HealthOut,
     SchedulerStatus,
+    SourceCreate,
     SourceOut,
 )
-from app.collector import CollectionInProgressError, run_collection
-from app.db.models import DigestPeriod, NewsItem, Source
+from app.collector import (
+    CollectionInProgressError,
+    InvalidFeedError,
+    SourceExistsError,
+    SourceNotFoundError,
+    add_feed_source,
+    remove_source,
+    run_collection,
+)
+from app.db.models import DigestPeriod, NewsItem, Source, SourceType
 from app.digest import build_digest, render_text
 from app.scheduler import COLLECT_JOB_ID
 
@@ -52,6 +61,19 @@ def health(session: SessionDep, scheduler=Depends(get_scheduler)):
     return body
 
 
+def _source_out(source: Source, news_count: int) -> SourceOut:
+    return SourceOut(
+        id=source.id,
+        name=source.name,
+        type=source.type,
+        url=source.url,
+        is_active=source.is_active,
+        last_fetched_at=source.last_fetched_at,
+        last_error=source.last_error,
+        news_count=news_count,
+    )
+
+
 @router.get("/sources", response_model=list[SourceOut], tags=["sources"])
 def list_sources(session: SessionDep):
     """Источники новостей, их статус и количество сохранённых новостей"""
@@ -62,19 +84,59 @@ def list_sources(session: SessionDep):
         .scalar_subquery()
     )
     rows = session.execute(select(Source, news_count).order_by(Source.id)).all()
-    return [
-        SourceOut(
-            id=source.id,
-            name=source.name,
-            type=source.type,
-            url=source.url,
-            is_active=source.is_active,
-            last_fetched_at=source.last_fetched_at,
-            last_error=source.last_error,
-            news_count=count,
+    return [_source_out(source, count) for source, count in rows]
+
+
+@router.post(
+    "/sources",
+    response_model=SourceOut,
+    status_code=status.HTTP_201_CREATED,
+    tags=["sources"],
+    responses={
+        409: {"description": "Источник с таким названием или адресом уже есть"},
+        422: {"description": "Некорректные данные или по адресу нет работающей ленты"},
+    },
+)
+def create_source(
+    body: SourceCreate,
+    session: SessionDep,
+    client: HttpClientDep,
+    verify: Annotated[
+        bool, Query(description="Проверить ленту перед добавлением (скачать и разобрать)")
+    ] = True,
+):
+    """Добавить свою RSS/Atom-ленту/Google Alerts ленту )"""
+    try:
+        source = add_feed_source(
+            session,
+            body.name,
+            str(body.url),
+            SourceType(body.type),
+            client=client if verify else None,
         )
-        for source, count in rows
-    ]
+    except SourceExistsError as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except InvalidFeedError as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
+    
+    session.commit()
+    return _source_out(source, news_count=0)
+
+
+@router.delete(
+    "/sources/{source_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["sources"],
+    responses={404: {"description": "Источник не найден"}},
+)
+def delete_source(source_id: int, session: SessionDep):
+    """Удалить источник вместе со всеми его новостями"""
+    try:
+        remove_source(session, source_id)
+    except SourceNotFoundError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    session.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(

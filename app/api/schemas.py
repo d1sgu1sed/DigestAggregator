@@ -1,6 +1,8 @@
 from datetime import datetime
+from enum import StrEnum
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, StringConstraints
 
 from app.db.models import DigestPeriod, SourceType
 
@@ -29,6 +31,21 @@ class SourceOut(BaseModel):
     last_fetched_at: datetime | None
     last_error: str | None
     news_count: int
+
+
+class FeedType(StrEnum):
+    RSS = SourceType.RSS.value
+    GOOGLE_ALERTS = SourceType.GOOGLE_ALERTS.value
+
+
+class SourceCreate(BaseModel):
+    name: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True, min_length=1, max_length=255),
+        Field(examples=["Хабр"]),
+    ]
+    url: Annotated[HttpUrl, Field(examples=["https://habr.com/ru/rss/articles/"])]
+    type: FeedType = FeedType.RSS
 
 
 class CollectResultOut(BaseModel):
