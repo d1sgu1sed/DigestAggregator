@@ -16,7 +16,6 @@ from app.llm.prompts import EVENTS_SYSTEM, parse_list
 
 logger = logging.getLogger(__name__)
 
-# ~1000 токенов заголовков + системный промпт + ответ укладываются в NUM_CTX=2048.
 CHUNK_CHARS = 3000
 EVENTS_LIMIT = {DigestPeriod.DAY: 7, DigestPeriod.WEEK: 10}
 MAX_REDUCE_ROUNDS = 5
@@ -24,27 +23,20 @@ PERIOD_TITLES = {DigestPeriod.DAY: "день", DigestPeriod.WEEK: "неделю"
 
 
 class DigestInProgressError(Exception):
-    """Дайджест уже генерируется - второй параллельно не запускаем."""
+    """Дайджест уже генерируется - второй параллельно не запускаем"""
 
 
 class DigestNotFoundError(Exception):
-    """Дайджеста с таким id нет."""
+    """Дайджеста с таким id нет"""
 
 
-# Ollama на слабой видеокарте обрабатывает запросы по одному,
-# параллельная генерация только замедлила бы обе задачи.
 _generation_lock = threading.Lock()
 
 
 def select_titles(
     session: Session, start: datetime, end: datetime, per_source_per_day: int
 ) -> tuple[list[str], int]:
-    """Заголовки за период: не больше per_source_per_day свежих от источника в день.
-
-    Ограничение не даёт одному «шумному» источнику (например, Hacker News)
-    заполнить весь дайджест и держит время генерации в разумных пределах.
-    Возвращает строки «[дд.мм] заголовок» в хронологическом порядке и общее число новостей.
-    """
+    """Заголовки за период: не больше per_source_per_day свежих от источника в день"""
     news = session.scalars(
         select(NewsItem)
         .options(joinedload(NewsItem.source))
@@ -59,7 +51,7 @@ def select_titles(
         if taken[key] < per_source_per_day:
             taken[key] += 1
             selected.append(n)
-    selected.reverse()  # хронологически: модели проще связывать события
+    selected.reverse()
     return [f"[{n.published_at:%d.%m}] {n.title}" for n in selected], len(news)
 
 
@@ -134,7 +126,7 @@ def start_llm_digest(
 
 
 def abandon_llm_digest() -> None:
-    """Снимает блокировку, если задачу создать не удалось и run_llm_digest не будет вызван."""
+    """Снимает блокировку"""
     _generation_lock.release()
 
 
@@ -144,7 +136,7 @@ def run_llm_digest(
     client_factory: Callable[[], OllamaClient],
     per_source_per_day: int,
 ) -> None:
-    """Фоновая генерация дайджеста. Снимает блокировку, взятую start_llm_digest."""
+    """Фоновая генерация дайджеста"""
     try:
         with session_factory() as session:
             digest = session.get(Digest, digest_id)
@@ -186,7 +178,7 @@ def get_digest(session: Session, digest_id: int) -> Digest:
 
 
 def fail_interrupted_digests(session: Session) -> int:
-    """Задачи, прерванные остановкой сервиса, помечаются как неудачные (вызывать при старте)."""
+    """Задачи, прерванные остановкой сервиса, помечаются как неудачные"""
     result = session.execute(
         update(Digest)
         .where(Digest.status.in_([DigestStatus.PENDING, DigestStatus.RUNNING]))

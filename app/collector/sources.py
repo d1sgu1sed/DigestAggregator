@@ -1,7 +1,8 @@
 from dataclasses import dataclass
+from enum import StrEnum
 
 import httpx
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -9,11 +10,18 @@ from app.collector.http import FetchError, fetch
 from app.collector.parsers import ParseError, parse_feed
 from app.config import settings
 from app.db.dedup import normalize_url
-from app.db.models import Source, SourceType
+from app.db.models import NewsItem, Source, SourceType
 from app.db.repository import get_or_create_source
 
 # Пользователь может добавить только ленты, т.к. для API нужен отдельный парсер
 FEED_SOURCE_TYPES = (SourceType.RSS, SourceType.GOOGLE_ALERTS)
+
+
+class FeedType(StrEnum):
+    """Типы источников, которые пользователь может добавить сам (только ленты)"""
+
+    RSS = SourceType.RSS.value
+    GOOGLE_ALERTS = SourceType.GOOGLE_ALERTS.value
 
 
 class SourceExistsError(Exception):
@@ -36,13 +44,8 @@ class SourceConfig:
 
 
 DEFAULT_SOURCES = [
-    SourceConfig("BBC News - World", SourceType.RSS, "https://feeds.bbci.co.uk/news/world/rss.xml"),
-    SourceConfig("Meduza", SourceType.RSS, "https://meduza.io/rss/all"),
-    SourceConfig(
-        "Hacker News",
-        SourceType.API,
-        "https://hn.algolia.com/api/v1/search_by_date?tags=story&hitsPerPage=50",
-    ),
+    SourceConfig("Хабр", SourceType.RSS, "https://habr.com/ru/rss/news/?fl=ru"),
+    SourceConfig("Коммерсантъ", SourceType.RSS, "https://www.kommersant.ru/RSS/news.xml"),
 ]
 
 
@@ -61,6 +64,17 @@ def seed_sources(session: Session, sources: list[SourceConfig] | None = None) ->
         get_or_create_source(session, s.name, s.type, s.url)
         for s in (configured_sources() if sources is None else sources)
     ]
+
+
+def list_sources_with_counts(session: Session) -> list[tuple[Source, int]]:
+    """Все источники и число сохранённых новостей каждого."""
+    news_count = (
+        select(func.count(NewsItem.id))
+        .where(NewsItem.source_id == Source.id)
+        .correlate(Source)
+        .scalar_subquery()
+    )
+    return [tuple(row) for row in session.execute(select(Source, news_count).order_by(Source.id))]
 
 
 def find_source_by_url(session: Session, url: str) -> Source | None:

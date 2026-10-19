@@ -161,7 +161,7 @@ def seed_timeline(session, source_id):
             make_item(2, published_at=NOW - timedelta(hours=20)),
             make_item(3, published_at=NOW - timedelta(days=3)),
             make_item(4, published_at=NOW - timedelta(days=10)),
-            make_item(5, published_at=NOW + timedelta(hours=1)),  # «из будущего»
+            make_item(5, published_at=NOW + timedelta(hours=1)),
         ],
     )
 

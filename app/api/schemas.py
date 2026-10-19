@@ -1,10 +1,10 @@
 import uuid
 from datetime import datetime
-from enum import StrEnum
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, StringConstraints
 
+from app.collector.sources import FeedType
 from app.db.models import DigestPeriod, DigestStatus, SourceType
 
 
@@ -32,11 +32,6 @@ class SourceOut(BaseModel):
     last_fetched_at: datetime | None
     last_error: str | None
     news_count: int
-
-
-class FeedType(StrEnum):
-    RSS = SourceType.RSS.value
-    GOOGLE_ALERTS = SourceType.GOOGLE_ALERTS.value
 
 
 class SourceCreate(BaseModel):

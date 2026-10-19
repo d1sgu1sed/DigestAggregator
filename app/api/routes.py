@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Response, status
 from fastapi.responses import PlainTextResponse
-from sqlalchemy import func, select, text
+from sqlalchemy import select, text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.deps import HttpClientDep, LLMClientDep, SessionDep, get_scheduler
@@ -24,11 +24,12 @@ from app.collector import (
     SourceExistsError,
     SourceNotFoundError,
     add_feed_source,
+    list_sources_with_counts,
     remove_source,
     run_collection,
 )
 from app.config import settings
-from app.db.models import Digest, DigestPeriod, DigestStatus, NewsItem, Source, SourceType
+from app.db.models import Digest, DigestPeriod, DigestStatus, Source, SourceType
 from app.digest import build_digest, render_text
 from app.db.session import session_scope
 from app.llm import (
@@ -96,14 +97,7 @@ def _source_out(source: Source, news_count: int) -> SourceOut:
 @router.get("/sources", response_model=list[SourceOut], tags=["sources"])
 def list_sources(session: SessionDep):
     """Источники новостей, их статус и количество сохранённых новостей"""
-    news_count = (
-        select(func.count(NewsItem.id))
-        .where(NewsItem.source_id == Source.id)
-        .correlate(Source)
-        .scalar_subquery()
-    )
-    rows = session.execute(select(Source, news_count).order_by(Source.id)).all()
-    return [_source_out(source, count) for source, count in rows]
+    return [_source_out(source, count) for source, count in list_sources_with_counts(session)]
 
 
 @router.post(
